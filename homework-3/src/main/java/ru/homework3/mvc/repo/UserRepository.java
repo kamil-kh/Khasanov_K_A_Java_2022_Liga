@@ -1,9 +1,14 @@
-package homework2.repository;
+package ru.homework3.mvc.repo;
 
-import homework2.entity.Task;
-import homework2.entity.User;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.PropertySource;
+import org.springframework.stereotype.Repository;
+import ru.homework3.mvc.model.Task;
+import ru.homework3.mvc.model.User;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -11,9 +16,8 @@ import java.nio.file.StandardOpenOption;
 import java.util.*;
 import java.util.stream.Collectors;
 
+@Repository
 public class UserRepository {
-
-    //Хранит выгруженных пользователей из файла
     private HashMap<Integer, User> inMemoryUsers = new HashMap<>();
     //Хранит id всех пользователей
     private Set<Integer> idUsers = new HashSet<>();
@@ -22,12 +26,17 @@ public class UserRepository {
     private final String dirUsers = "csv/Users.csv";
     private final String dirTasks = "csv/Tasks.csv";
 
-    public UserRepository() throws IOException {
-        init();
+    public UserRepository() {
+        try {
+            init();
+        } catch (IOException ex) {
+            System.out.println(ex.getMessage());
+        }
     }
 
     //Выгружает данные из файлов
     private void init() throws IOException {
+        System.out.println(dirTasks);
         BufferedReader reader = Files.newBufferedReader(Path.of(dirUsers), StandardCharsets.UTF_8);
         String line;
         String[] words;
@@ -54,122 +63,156 @@ public class UserRepository {
                     words = line.split("[,;]");
                     id = Integer.parseInt(words[0]);
                     int idUser = Integer.parseInt(words[1]);
-                    Task task = new Task(id, idUser, words[2], words[3], words[4]);
+                    Task task = new Task(id, idUser, words[2], words[3], words[4], "Новая");
                     ((User)inMemoryUsers.get(idUser)).getTasks().put(id, task);
                     idTasks.add(id);
+                    task.setStatus(words[5]);
                 }
             } catch (NumberFormatException ex) {
                 System.out.println(ex.getMessage());
             } catch (IndexOutOfBoundsException ex) {
-                System.out.println(ex.getMessage());
             } catch (NullPointerException ex) {}
         }
         reader.close();
     }
 
-    //Удаляет задачу из памяти и файла
-    public String removeTask(int keyUser, int keyTask) {
-        try {
-            inMemoryUsers.get(keyUser).getTasks().remove(keyTask);
-            idTasks.remove(keyTask);
-            rewriteFileTasks();
-            return "";
-        } catch (IOException ex) {
-            return "\nОшибка изменения файлов";
-        }
+    public List<User> getUsers() {
+        return new ArrayList<User>(inMemoryUsers.values());
     }
 
-    //Удаляет пользователя из памяти и файла
-    public String removeUser(int keyUser){
-        try {
-            inMemoryUsers.remove(keyUser);
-            idUsers.remove(keyUser);
-            rewriteFileUsers();
-            rewriteFileTasks();
-            return "";
-        } catch (IOException ex) {
-            return "\nОшибка изменения файлов";
-        }
+    public List<Task> getTasks(int idUser) {
+        return new ArrayList<Task>(inMemoryUsers.get(idUser).getTasks().values());
     }
 
-    //Добавляет задачу в память и файл
-    public String addTask(int keyUser, String header, String description, String date) {
-        try {
-            int idTask = generateIdTask();
-            idTasks.add(idTask);
-            Task task = new Task(idTask, keyUser, header, description, date);
-            inMemoryUsers.get(keyUser).getTasks().put(idTask, task);
-            rewriteFileTasks();
-            return "";
-        } catch (IOException ex) {
-            return "\nОшибка записи в файл Task.csv";
-        }
+    public Task getTask(int idUser, int idTask) {
+        return inMemoryUsers.get(idUser).getTasks().get(idTask);
     }
 
     //добавляет пользователя в файл и память
-    public void addUser(String name) throws IOException {
+    public boolean addUser(String name) {
         int idUser = generateIdUser();
         idUsers.add(idUser);
         inMemoryUsers.put(idUser, new User(idUser, name, new HashMap<Integer, Task>()));
-        rewriteFileUsers();
+        try {
+            rewriteFileUsers();
+        } catch (IOException ex) {
+            idUsers.remove(idUser);
+            inMemoryUsers.remove(idUser);
+            return false;
+        }
+        return true;
     }
 
-    //Изменяет задачу в памяти и файле
-    public String changeTask(int keyUser, int keyTask, String description, String date, String status) {
+    //Удаляет пользователя из памяти и файла
+    public boolean removeUser(int keyUser){
+        User user = inMemoryUsers.remove(keyUser);
+        idUsers.remove(keyUser);
         try {
-            Task task = inMemoryUsers.get(keyUser).getTasks().get(keyTask);
-            task.setDescription(description);
-            task.setDate(date);
-            task.setStatus(status);
+            rewriteFileUsers();
             rewriteFileTasks();
-            return "";
         } catch (IOException ex) {
-            return "\nОшибка записи в файл Task.csv";
+            inMemoryUsers.put(keyUser, user);
+            idUsers.add(keyUser);
+            return false;
         }
+        return true;
     }
 
     //Удаляет всех пользователей из памяти и файла. Также удаляет все задачи, так как они не будут иметь зависимости.
-    public String clearUsers() {
+    public boolean clearUsers() {
+        HashMap<Integer, User> users = (HashMap<Integer,User>)inMemoryUsers.clone();
+        inMemoryUsers.clear();
         try {
-            inMemoryUsers.clear();
-            BufferedWriter writer = Files.newBufferedWriter(Path.of(dirTasks), StandardCharsets.UTF_8,
-                    StandardOpenOption.WRITE, StandardOpenOption.TRUNCATE_EXISTING
+            BufferedWriter writer = Files.newBufferedWriter(Path.of(dirTasks),
+                    StandardCharsets.UTF_8,
+                    StandardOpenOption.WRITE,
+                    StandardOpenOption.TRUNCATE_EXISTING
             );
             writer.close();
-            writer = Files.newBufferedWriter(Path.of(dirUsers), StandardCharsets.UTF_8,
-                    StandardOpenOption.WRITE, StandardOpenOption.TRUNCATE_EXISTING
+            writer = Files.newBufferedWriter(Path.of(dirUsers),
+                    StandardCharsets.UTF_8,
+                    StandardOpenOption.WRITE,
+                    StandardOpenOption.TRUNCATE_EXISTING
             );
             writer.close();
-            return "";
+            idUsers.clear();
+            idTasks.clear();
         } catch (IOException ex) {
-            return "\nОшибка записи в файл User.csv";
+            inMemoryUsers = users;
+            return false;
         }
+        return true;
+    }
+
+    //Добавляет задачу в память и файл
+    public boolean addTask(int keyUser, String header, String description, String date) {
+        int idTask = generateIdTask();
+        idTasks.add(idTask);
+        Task task = new Task(idTask, keyUser, header, description, date, "Новая");
+        try {
+            inMemoryUsers.get(keyUser).getTasks().put(idTask, task);
+            rewriteFileTasks();
+        } catch (IOException ex) {
+            inMemoryUsers.get(keyUser).getTasks().remove(task);
+            idTasks.remove(idTask);
+            return false;
+        }
+        return true;
+    }
+
+    //Изменяет задачу в памяти и файле
+    public boolean changeTask(int keyUser, int keyTask, String description, String date, String status) {
+        Task task = inMemoryUsers.get(keyUser).getTasks().get(keyTask);
+        String oldDescription = task.getDescription();
+        String oldDate = task.getDate();
+        String oldStatus = task.getStatus();
+        task.setDescription(description);
+        task.setDate(date);
+        task.setStatus(status);
+        try {
+            rewriteFileTasks();
+        } catch (IOException ex) {
+            task.setDescription(oldDescription);
+            task.setDate(oldDate);
+            task.setStatus(oldStatus);
+            return false;
+        }
+        return true;
+    }
+
+    //Удаляет задачу из памяти и файла
+    public boolean removeTask(int keyUser, int keyTask) {
+        HashMap<Integer, Task> tasks = inMemoryUsers.get(keyUser).getTasks();
+        Task task = tasks.remove(keyTask);
+        idTasks.remove(keyTask);
+        try {
+            rewriteFileTasks();
+        } catch (IOException ex) {
+            tasks.put(keyTask, task);
+            idTasks.add(keyTask);
+            return false;
+        }
+        return true;
     }
 
     //Удаляет все задачи из памяти и файла
-    public String clearTasks() {
+    public boolean clearTasks() {
+        HashMap<Integer, User> users = (HashMap<Integer,User>)inMemoryUsers.clone();
         try {
             for (int keyUser : idUsers) {
                 inMemoryUsers.get(keyUser).getTasks().clear();
             }
-            BufferedWriter writer = Files.newBufferedWriter(Path.of(dirTasks), StandardCharsets.UTF_8,
-                    StandardOpenOption.WRITE, StandardOpenOption.TRUNCATE_EXISTING
+            BufferedWriter writer = Files.newBufferedWriter(Path.of(dirTasks),
+                    StandardCharsets.UTF_8,
+                    StandardOpenOption.WRITE,
+                    StandardOpenOption.TRUNCATE_EXISTING
             );
             writer.close();
-            return "";
         } catch (IOException ex) {
-            return "\nОшибка записи в файл Task.csv";
+            inMemoryUsers = users;
+            return false;
         }
-    }
-
-    //Возвращает копию памяти всех пользователей
-    public HashMap<Integer,User> getUsers() {
-        return (HashMap<Integer,User>)inMemoryUsers.clone();
-    }
-
-    //Возвращает копию пользователя по ключу
-    public User getUser(int key) {
-        return inMemoryUsers.get(key).clone();
+        return true;
     }
 
     //Генерирует простой id для пользователя
@@ -195,8 +238,7 @@ public class UserRepository {
         BufferedWriter writer = Files.newBufferedWriter(Path.of(dirTasks), StandardCharsets.UTF_8,
                 StandardOpenOption.WRITE, StandardOpenOption.TRUNCATE_EXISTING
         );
-        writer.write("//id,idUser,Header,Description,Date\n" +
-                "#id должен быть уникальным\n");
+        writer.write("//id,idUser,Header,Description,Date\n" + "#id должен быть уникальным\n");
         HashMap<Integer, Task> tasks = new HashMap<>();
         for (int keyUser : idUsers) {
             tasks.putAll(inMemoryUsers.get(keyUser).getTasks());
@@ -205,7 +247,7 @@ public class UserRepository {
                 .collect(Collectors.toSet());
         for (int keyTask : idTasks) {
             Task task = tasks.get(keyTask);
-            writer.write(Integer.toString(task.getId()) + "," + Integer.toString(task.getUserId()) +
+            writer.write(Integer.toString(task.getId()) + "," + Integer.toString(task.getIdUser()) +
                     "," + task.getHeader() + "," + task.getDescription() + "," + task.getDate() + "," +
                     task.getStatus() + "\n"
             );
@@ -219,15 +261,11 @@ public class UserRepository {
                 Path.of(dirUsers), StandardCharsets.UTF_8,
                 StandardOpenOption.WRITE, StandardOpenOption.TRUNCATE_EXISTING
         );
-        writer.write (
-                "#id,Name\n" +
-                "//id должен быть уникальным\n"
-        );
+        writer.write ("#id,Name\n" + "//id должен быть уникальным\n");
         idUsers = idUsers.stream().sorted((id1, id2) -> id1 - id2).collect(Collectors.toSet());
         for (int keyUser : idUsers) {
             writer.write(Integer.toString(keyUser) + "," + inMemoryUsers.get(keyUser).getName() + "\n");
         }
         writer.close();
     }
-
 }
