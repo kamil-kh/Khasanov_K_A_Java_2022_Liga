@@ -17,16 +17,19 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 @Repository
+@PropertySource("classpath:application.yml")
 public class UserRepository {
     private HashMap<Integer, User> inMemoryUsers = new HashMap<>();
     //Хранит id всех пользователей
     private Set<Integer> idUsers = new HashSet<>();
     //Хранит id всех задач
     private Set<Integer> idTasks = new HashSet<>();
-    private final String dirUsers = "csv/Users.csv";
-    private final String dirTasks = "csv/Tasks.csv";
+    private final String dirUsers;
+    private final String dirTasks;
 
-    public UserRepository() {
+    public UserRepository(@Value("${csv.usersDir}") String dirUsers, @Value("${csv.dirTasks}") String dirTasks) {
+        this.dirUsers = dirUsers;
+        this.dirTasks = dirTasks;
         try {
             init();
         } catch (IOException ex) {
@@ -36,7 +39,6 @@ public class UserRepository {
 
     //Выгружает данные из файлов
     private void init() throws IOException {
-        System.out.println(dirTasks);
         BufferedReader reader = Files.newBufferedReader(Path.of(dirUsers), StandardCharsets.UTF_8);
         String line;
         String[] words;
