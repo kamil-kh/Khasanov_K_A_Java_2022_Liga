@@ -9,7 +9,7 @@ import lombok.Setter;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-public class Task {
+public class Task implements Cloneable {
     private int id;
     private int idUser;
     private String header;
@@ -29,5 +29,9 @@ public class Task {
                 date +
                 " | Статус: " +
                 status;
+    }
+
+    public Task clone() {
+        return new Task(id, idUser, header, description, date, status);
     }
 }

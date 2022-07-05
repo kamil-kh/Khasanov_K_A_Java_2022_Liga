@@ -1,10 +1,10 @@
 package ru.homework3.mvc.repo;
 
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.PropertySource;
 import org.springframework.stereotype.Repository;
 import ru.homework3.mvc.model.Task;
 import ru.homework3.mvc.model.User;
+import ru.homework3.mvc.utils.ResponseCode;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -26,6 +26,8 @@ public class UserRepository {
     private final String dirUsers;
     private final String dirTasks;
 
+    private final char SHARP = 35; //символ '#'
+
     public UserRepository(@Value("${csv.usersDir}") String dirUsers, @Value("${csv.tasksDir}") String dirTasks) {
         this.dirUsers = dirUsers;
         this.dirTasks = dirTasks;
@@ -44,7 +46,7 @@ public class UserRepository {
         int id;
         for (line = reader.readLine(); line != null; line = reader.readLine()) {
             try {
-                if (line.charAt(0) != 35 && line.substring(0, 2).compareTo("//") != 0) {
+                if (line.charAt(0) != SHARP && line.substring(0, 2).compareTo("//") != 0) {
                     words = line.split("[,;]");
                     id = Integer.parseInt(words[0]);
                     inMemoryUsers.put(id, new User(id, words[1], new HashMap()));
@@ -54,8 +56,9 @@ public class UserRepository {
                 System.out.println(ex.getMessage());
             } catch (IndexOutOfBoundsException ex) {
                 System.out.println(ex.getMessage());
-            }
+            } catch (NullPointerException ex) {}
         }
+        idUsers = idUsers.stream().sorted((id1, id2) -> id1 - id2).collect(Collectors.toSet());
         reader.close();
         reader = Files.newBufferedReader(Path.of(dirTasks), StandardCharsets.UTF_8);
         for (line = reader.readLine(); line != null; line = reader.readLine()) {
@@ -65,7 +68,7 @@ public class UserRepository {
                     id = Integer.parseInt(words[0]);
                     int idUser = Integer.parseInt(words[1]);
                     Task task = new Task(id, idUser, words[2], words[3], words[4], "Новая");
-                    ((User)inMemoryUsers.get(idUser)).getTasks().put(id, task);
+                    inMemoryUsers.get(idUser).getTasks().put(id, task);
                     idTasks.add(id);
                     task.setStatus(words[5]);
                 }
@@ -74,38 +77,42 @@ public class UserRepository {
             } catch (IndexOutOfBoundsException ex) {
             } catch (NullPointerException ex) {}
         }
+        idTasks = idTasks.stream().sorted((id1, id2) -> id1 - id2).collect(Collectors.toSet());
         reader.close();
     }
 
     public List<User> getUsers() {
-        return new ArrayList<User>(inMemoryUsers.values());
+        return new ArrayList<>(inMemoryUsers.values());
     }
 
     public List<Task> getTasks(int idUser) {
-        return new ArrayList<Task>(inMemoryUsers.get(idUser).getTasks().values());
+        return new ArrayList<>(inMemoryUsers.get(idUser).getTasks().values());
     }
 
     public Task getTask(int idUser, int idTask) {
         return inMemoryUsers.get(idUser).getTasks().get(idTask);
     }
 
+    public Set<Integer> getIdUsers() {return idUsers;}
+
     //добавляет пользователя в файл и память
-    public boolean addUser(String name) {
+    public ResponseCode addUser(User user) {
         int idUser = generateIdUser();
+        user.setId(idUser);
         idUsers.add(idUser);
-        inMemoryUsers.put(idUser, new User(idUser, name, new HashMap<Integer, Task>()));
+        inMemoryUsers.put(idUser, user);
         try {
             rewriteFileUsers();
         } catch (IOException ex) {
             idUsers.remove(idUser);
             inMemoryUsers.remove(idUser);
-            return false;
+            return ResponseCode.ERROR_WRITE_OR_READ_CSV;
         }
-        return true;
+        return ResponseCode.SUCCESS;
     }
 
     //Удаляет пользователя из памяти и файла
-    public boolean removeUser(int keyUser){
+    public ResponseCode removeUser(int keyUser){
         User user = inMemoryUsers.remove(keyUser);
         idUsers.remove(keyUser);
         try {
@@ -114,13 +121,13 @@ public class UserRepository {
         } catch (IOException ex) {
             inMemoryUsers.put(keyUser, user);
             idUsers.add(keyUser);
-            return false;
+            return ResponseCode.ERROR_WRITE_OR_READ_CSV;
         }
-        return true;
+        return ResponseCode.SUCCESS;
     }
 
     //Удаляет всех пользователей из памяти и файла. Также удаляет все задачи, так как они не будут иметь зависимости.
-    public boolean clearUsers() {
+    public ResponseCode clearUsers() {
         HashMap<Integer, User> users = (HashMap<Integer,User>)inMemoryUsers.clone();
         inMemoryUsers.clear();
         try {
@@ -140,49 +147,45 @@ public class UserRepository {
             idTasks.clear();
         } catch (IOException ex) {
             inMemoryUsers = users;
-            return false;
+            return ResponseCode.ERROR_WRITE_OR_READ_CSV;
         }
-        return true;
+        return ResponseCode.SUCCESS;
     }
 
     //Добавляет задачу в память и файл
-    public boolean addTask(int keyUser, String header, String description, String date) {
+    public ResponseCode addTask(Task task) {
         int idTask = generateIdTask();
         idTasks.add(idTask);
-        Task task = new Task(idTask, keyUser, header, description, date, "Новая");
+        task.setId(idTask);
+        int keyUser = task.getIdUser();
         try {
             inMemoryUsers.get(keyUser).getTasks().put(idTask, task);
             rewriteFileTasks();
         } catch (IOException ex) {
             inMemoryUsers.get(keyUser).getTasks().remove(task);
             idTasks.remove(idTask);
-            return false;
+            return ResponseCode.ERROR_WRITE_OR_READ_CSV;
         }
-        return true;
+        return ResponseCode.SUCCESS;
     }
 
     //Изменяет задачу в памяти и файле
-    public boolean changeTask(int keyUser, int keyTask, String description, String date, String status) {
-        Task task = inMemoryUsers.get(keyUser).getTasks().get(keyTask);
-        String oldDescription = task.getDescription();
-        String oldDate = task.getDate();
-        String oldStatus = task.getStatus();
-        task.setDescription(description);
-        task.setDate(date);
-        task.setStatus(status);
+    public ResponseCode changeTask(Task updateTask) {
+        HashMap<Integer,Task> tasks = inMemoryUsers.get(updateTask.getIdUser()).getTasks();
+        int idTask = updateTask.getId();
+        Task taskCopy = tasks.get(idTask).clone();
+        tasks.replace(idTask, updateTask);
         try {
             rewriteFileTasks();
         } catch (IOException ex) {
-            task.setDescription(oldDescription);
-            task.setDate(oldDate);
-            task.setStatus(oldStatus);
-            return false;
+            tasks.replace(idTask, taskCopy);
+            return ResponseCode.ERROR_WRITE_OR_READ_CSV;
         }
-        return true;
+        return ResponseCode.SUCCESS;
     }
 
     //Удаляет задачу из памяти и файла
-    public boolean removeTask(int keyUser, int keyTask) {
+    public ResponseCode removeTask(int keyUser, int keyTask) {
         HashMap<Integer, Task> tasks = inMemoryUsers.get(keyUser).getTasks();
         Task task = tasks.remove(keyTask);
         idTasks.remove(keyTask);
@@ -191,13 +194,13 @@ public class UserRepository {
         } catch (IOException ex) {
             tasks.put(keyTask, task);
             idTasks.add(keyTask);
-            return false;
+            return ResponseCode.ERROR_WRITE_OR_READ_CSV;
         }
-        return true;
+        return ResponseCode.SUCCESS;
     }
 
     //Удаляет все задачи из памяти и файла
-    public boolean clearTasks() {
+    public ResponseCode clearTasks() {
         HashMap<Integer, User> users = (HashMap<Integer,User>)inMemoryUsers.clone();
         try {
             for (int keyUser : idUsers) {
@@ -211,9 +214,9 @@ public class UserRepository {
             writer.close();
         } catch (IOException ex) {
             inMemoryUsers = users;
-            return false;
+            return ResponseCode.ERROR_WRITE_OR_READ_CSV;
         }
-        return true;
+        return ResponseCode.SUCCESS;
     }
 
     //Генерирует простой id для пользователя
@@ -244,11 +247,9 @@ public class UserRepository {
         for (int keyUser : idUsers) {
             tasks.putAll(inMemoryUsers.get(keyUser).getTasks());
         }
-        idTasks = tasks.keySet().stream().sorted((key1, key2) -> tasks.get(key1).getId() - tasks.get(key2).getId())
-                .collect(Collectors.toSet());
         for (int keyTask : idTasks) {
             Task task = tasks.get(keyTask);
-            writer.write(Integer.toString(task.getId()) + "," + Integer.toString(task.getIdUser()) +
+            writer.write(task.getId() + "," + task.getIdUser() +
                     "," + task.getHeader() + "," + task.getDescription() + "," + task.getDate() + "," +
                     task.getStatus() + "\n"
             );
@@ -263,9 +264,8 @@ public class UserRepository {
                 StandardOpenOption.WRITE, StandardOpenOption.TRUNCATE_EXISTING
         );
         writer.write ("#id,Name\n" + "//id должен быть уникальным\n");
-        idUsers = idUsers.stream().sorted((id1, id2) -> id1 - id2).collect(Collectors.toSet());
         for (int keyUser : idUsers) {
-            writer.write(Integer.toString(keyUser) + "," + inMemoryUsers.get(keyUser).getName() + "\n");
+            writer.write(keyUser + "," + inMemoryUsers.get(keyUser).getName() + "\n");
         }
         writer.close();
     }

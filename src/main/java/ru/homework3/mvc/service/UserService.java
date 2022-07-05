@@ -5,6 +5,8 @@ import org.springframework.stereotype.Service;
 import ru.homework3.mvc.model.Task;
 import ru.homework3.mvc.model.User;
 import ru.homework3.mvc.repo.UserRepository;
+import ru.homework3.mvc.utils.ResponseCode;
+import ru.homework3.mvc.validator.Validator;
 
 import java.util.List;
 
@@ -27,54 +29,21 @@ public class UserService {
         return usersStr;
     }
 
-    public String getTasks(int idUser, int filter) {
-        String tasksStr = "";
-        List<Task> tasks = userRepository.getTasks(idUser);
-        if (filter == 1) {
-            tasks = tasks.stream().sorted((task1, task2) -> task1.getId() - task2.getId()).toList();
+    public ResponseCode createUser(User user) {
+        if (Validator.validateName(user.getName())) {
+            return userRepository.addUser(user);
         } else {
-            tasks = tasks.stream().sorted((task1, task2) -> task1.getStatus().compareTo(task2.getStatus())).toList();
+            return ResponseCode.ERROR_VALIDATE;
         }
-        for (Task task: tasks) {
-            tasksStr += task.toString() +
-                    " {<a href='/" + idUser +
-                    "/update_task/" + task.getId() +
-                    "'>Изменить</a> | <a href='/" + idUser +
-                    "/delete_task/" + + task.getId() +
-                    "?filter=" + filter + "'>Удалить</a>}<br/>";
-        }
-        return tasksStr;
     }
 
-    public Task getTask(int idUser, int idTask) {
-        return userRepository.getTask(idUser, idTask);
-    }
-
-    public boolean createUser(String name) {
-        return userRepository.addUser(name);
-    }
-
-    public boolean deleteUser(int idUser) {
+    public ResponseCode deleteUser(int idUser) {
         return userRepository.removeUser(idUser);
     }
 
-    public boolean deleteUsers() {
+    public ResponseCode deleteUsers() {
         return userRepository.clearUsers();
     }
 
-    public boolean createTask(int idUser, String header, String description, String date) {
-        return userRepository.addTask(idUser, header, description, date);
-    }
 
-    public boolean deleteTask(int idUser, int idTask) {
-        return userRepository.removeTask(idUser, idTask);
-    }
-
-    public boolean deleteTasks() {
-        return userRepository.clearTasks();
-    }
-
-    public boolean updateTask(int idUser, int idTask, String description, String date, String status) {
-        return userRepository.changeTask(idUser, idTask, description, date, status);
-    }
 }
