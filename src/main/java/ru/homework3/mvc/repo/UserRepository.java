@@ -4,7 +4,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Repository;
 import ru.homework3.mvc.model.Task;
 import ru.homework3.mvc.model.User;
-import ru.homework3.mvc.utils.ResponseCode;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -96,7 +95,7 @@ public class UserRepository {
     public Set<Integer> getIdUsers() {return idUsers;}
 
     //добавляет пользователя в файл и память
-    public ResponseCode addUser(User user) {
+    public boolean addUser(User user) {
         int idUser = generateIdUser();
         user.setId(idUser);
         idUsers.add(idUser);
@@ -106,13 +105,13 @@ public class UserRepository {
         } catch (IOException ex) {
             idUsers.remove(idUser);
             inMemoryUsers.remove(idUser);
-            return ResponseCode.ERROR_WRITE_OR_READ_CSV;
+            return false;
         }
-        return ResponseCode.SUCCESS;
+        return true;
     }
 
     //Удаляет пользователя из памяти и файла
-    public ResponseCode removeUser(int keyUser){
+    public boolean removeUser(int keyUser){
         User user = inMemoryUsers.remove(keyUser);
         idUsers.remove(keyUser);
         try {
@@ -121,13 +120,13 @@ public class UserRepository {
         } catch (IOException ex) {
             inMemoryUsers.put(keyUser, user);
             idUsers.add(keyUser);
-            return ResponseCode.ERROR_WRITE_OR_READ_CSV;
+            return false;
         }
-        return ResponseCode.SUCCESS;
+        return true;
     }
 
     //Удаляет всех пользователей из памяти и файла. Также удаляет все задачи, так как они не будут иметь зависимости.
-    public ResponseCode clearUsers() {
+    public boolean clearUsers() {
         HashMap<Integer, User> users = (HashMap<Integer,User>)inMemoryUsers.clone();
         inMemoryUsers.clear();
         try {
@@ -147,13 +146,13 @@ public class UserRepository {
             idTasks.clear();
         } catch (IOException ex) {
             inMemoryUsers = users;
-            return ResponseCode.ERROR_WRITE_OR_READ_CSV;
+            return false;
         }
-        return ResponseCode.SUCCESS;
+        return true;
     }
 
     //Добавляет задачу в память и файл
-    public ResponseCode addTask(Task task) {
+    public boolean addTask(Task task) {
         int idTask = generateIdTask();
         idTasks.add(idTask);
         task.setId(idTask);
@@ -164,13 +163,13 @@ public class UserRepository {
         } catch (IOException ex) {
             inMemoryUsers.get(keyUser).getTasks().remove(task);
             idTasks.remove(idTask);
-            return ResponseCode.ERROR_WRITE_OR_READ_CSV;
+            return false;
         }
-        return ResponseCode.SUCCESS;
+        return true;
     }
 
     //Изменяет задачу в памяти и файле
-    public ResponseCode changeTask(Task updateTask) {
+    public boolean changeTask(Task updateTask) {
         HashMap<Integer,Task> tasks = inMemoryUsers.get(updateTask.getIdUser()).getTasks();
         int idTask = updateTask.getId();
         Task taskCopy = tasks.get(idTask).clone();
@@ -179,13 +178,13 @@ public class UserRepository {
             rewriteFileTasks();
         } catch (IOException ex) {
             tasks.replace(idTask, taskCopy);
-            return ResponseCode.ERROR_WRITE_OR_READ_CSV;
+            return false;
         }
-        return ResponseCode.SUCCESS;
+        return true;
     }
 
     //Удаляет задачу из памяти и файла
-    public ResponseCode removeTask(int keyUser, int keyTask) {
+    public boolean removeTask(int keyUser, int keyTask) {
         HashMap<Integer, Task> tasks = inMemoryUsers.get(keyUser).getTasks();
         Task task = tasks.remove(keyTask);
         idTasks.remove(keyTask);
@@ -194,13 +193,13 @@ public class UserRepository {
         } catch (IOException ex) {
             tasks.put(keyTask, task);
             idTasks.add(keyTask);
-            return ResponseCode.ERROR_WRITE_OR_READ_CSV;
+            return false;
         }
-        return ResponseCode.SUCCESS;
+        return true;
     }
 
     //Удаляет все задачи из памяти и файла
-    public ResponseCode clearTasks() {
+    public boolean clearTasks() {
         HashMap<Integer, User> users = (HashMap<Integer,User>)inMemoryUsers.clone();
         try {
             for (int keyUser : idUsers) {
@@ -214,9 +213,9 @@ public class UserRepository {
             writer.close();
         } catch (IOException ex) {
             inMemoryUsers = users;
-            return ResponseCode.ERROR_WRITE_OR_READ_CSV;
+            return false;
         }
-        return ResponseCode.SUCCESS;
+        return true;
     }
 
     //Генерирует простой id для пользователя

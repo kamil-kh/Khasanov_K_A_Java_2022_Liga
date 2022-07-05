@@ -2,7 +2,6 @@ package ru.homework3.mvc.service;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import ru.homework3.mvc.model.Task;
 import ru.homework3.mvc.model.User;
 import ru.homework3.mvc.repo.UserRepository;
 import ru.homework3.mvc.utils.ResponseCode;
@@ -31,19 +30,25 @@ public class UserService {
 
     public ResponseCode createUser(User user) {
         if (Validator.validateName(user.getName())) {
-            return userRepository.addUser(user);
+            return getCode(userRepository.addUser(user));
         } else {
             return ResponseCode.ERROR_VALIDATE;
         }
     }
 
     public ResponseCode deleteUser(int idUser) {
-        return userRepository.removeUser(idUser);
+        return getCode(userRepository.removeUser(idUser));
     }
 
     public ResponseCode deleteUsers() {
-        return userRepository.clearUsers();
+        return getCode(userRepository.clearUsers());
     }
 
-
+    private ResponseCode getCode(boolean isSuccess) {
+        if (isSuccess) {
+            return ResponseCode.SUCCESS;
+        } else {
+            return ResponseCode.ERROR_WRITE_OR_READ_CSV;
+        }
+    }
 }

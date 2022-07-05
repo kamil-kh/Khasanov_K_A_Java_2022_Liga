@@ -39,25 +39,33 @@ public class TaskService {
 
     public ResponseCode createTask(Task task) {
         if (Validator.validateDate(task.getDate())) {
-            return userRepository.addTask(task);
+            return getCode(userRepository.addTask(task));
         } else {
             return ResponseCode.ERROR_VALIDATE;
         }
     }
 
     public ResponseCode deleteTask(int idUser, int idTask) {
-        return userRepository.removeTask(idUser, idTask);
+        return getCode(userRepository.removeTask(idUser, idTask));
     }
 
     public ResponseCode deleteTasks() {
-        return userRepository.clearTasks();
+        return getCode(userRepository.clearTasks());
     }
 
     public ResponseCode updateTask(Task task) {
         if (Validator.validateDate(task.getDate())) {
-            return userRepository.changeTask(task);
+            return getCode(userRepository.changeTask(task));
         } else {
             return ResponseCode.ERROR_VALIDATE;
+        }
+    }
+
+    private ResponseCode getCode(boolean isSuccess) {
+        if (isSuccess) {
+            return ResponseCode.SUCCESS;
+        } else {
+            return ResponseCode.ERROR_WRITE_OR_READ_CSV;
         }
     }
 }
