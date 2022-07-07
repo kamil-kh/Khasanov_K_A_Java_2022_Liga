@@ -28,18 +28,28 @@ class UserRepositoryTest {
     private final String dirUsers = "csv/test/UsersTest.csv";
     private final String dirTasks = "csv/test/TasksTest.csv";
     private final UserRepository userRepository = new UserRepository(dirUsers, dirTasks);
+    private UserRepository userRepositoryFail;
+
+    @BeforeEach
+    private void beforeTest () {
+        userRepositoryFail = Mockito.mock(UserRepository.class);
+    }
 
     @AfterEach
-    private void preTest() {
+    private void afterTest() {
         try {
             BufferedWriter writer = Files.newBufferedWriter(
-                    Path.of(dirUsers), StandardCharsets.UTF_8,
-                    StandardOpenOption.WRITE, StandardOpenOption.TRUNCATE_EXISTING
+                    Path.of(dirUsers),
+                    StandardCharsets.UTF_8,
+                    StandardOpenOption.WRITE,
+                    StandardOpenOption.TRUNCATE_EXISTING
             );
             writer.close();
             writer = Files.newBufferedWriter(
-                    Path.of(dirTasks), StandardCharsets.UTF_8,
-                    StandardOpenOption.WRITE, StandardOpenOption.TRUNCATE_EXISTING
+                    Path.of(dirTasks),
+                    StandardCharsets.UTF_8,
+                    StandardOpenOption.WRITE,
+                    StandardOpenOption.TRUNCATE_EXISTING
             );
             writer.close();
         } catch (IOException ex) {
@@ -52,6 +62,13 @@ class UserRepositoryTest {
     void add_User() {
         User user = getUser();
         assertTrue(userRepository.addUser(user));
+    }
+
+    @Test
+    @DisplayName("Неудачное добавление пользователя")
+    void add_User_Fail() {
+        User user = getUser();
+        assertFalse(userRepositoryFail.addUser(user));
     }
 
     @Test
