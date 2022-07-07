@@ -1,18 +1,14 @@
-package ru.homework3.mvc.validator;
+package ru.homework3.mvc.utils.validator;
+
+import lombok.experimental.UtilityClass;
 
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.regex.Pattern;
 
+@UtilityClass
 public class Validator {
-    public static int validateInt(String data) {
-        try {
-            return Integer.parseInt(data);
-        } catch (NumberFormatException ex) {
-            return -1;
-        }
-    }
 
     public static boolean validateDate(String date) {
         DateFormat dateFormat = new SimpleDateFormat("dd.MM.yyyy");

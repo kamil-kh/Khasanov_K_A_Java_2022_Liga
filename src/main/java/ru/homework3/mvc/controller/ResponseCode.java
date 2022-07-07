@@ -1,4 +1,4 @@
-package ru.homework3.mvc.utils;
+package ru.homework3.mvc.controller;
 
 public enum ResponseCode {
     SUCCESS,

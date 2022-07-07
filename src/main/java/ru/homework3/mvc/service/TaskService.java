@@ -2,10 +2,10 @@ package ru.homework3.mvc.service;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import ru.homework3.mvc.controller.ResponseCode;
 import ru.homework3.mvc.model.Task;
 import ru.homework3.mvc.repo.UserRepository;
-import ru.homework3.mvc.utils.ResponseCode;
-import ru.homework3.mvc.validator.Validator;
+import ru.homework3.mvc.utils.validator.Validator;
 
 import java.util.List;
 

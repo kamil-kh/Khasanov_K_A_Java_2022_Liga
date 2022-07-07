@@ -5,14 +5,12 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.view.RedirectView;
 import ru.homework3.mvc.dto.UserDto;
 import ru.homework3.mvc.service.UserService;
-import ru.homework3.mvc.utils.ResponseCode;
 import ru.homework3.mvc.utils.UserMapping;
 
 @RestController
 @RequiredArgsConstructor
 public class UserController {
     private final UserService userService;
-    private final UserMapping userMapping;
 
     @GetMapping("/")
     public String index() {
@@ -57,7 +55,7 @@ public class UserController {
         UserDto userDto = new UserDto();
         userDto.setName(name);
 
-        ResponseCode code = userService.createUser(userMapping.mapToUser(userDto, false));
+        ResponseCode code = userService.createUser(UserMapping.mapToUser(userDto, false));
         RedirectView redirect;
         switch (code) {
             case ERROR_WRITE_OR_READ_CSV -> redirect = new RedirectView("/error_message?message=Error%20writing%20to%20the%20file!");

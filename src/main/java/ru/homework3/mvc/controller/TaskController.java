@@ -9,14 +9,12 @@ import org.springframework.web.servlet.view.RedirectView;
 import ru.homework3.mvc.dto.TaskDto;
 import ru.homework3.mvc.model.Task;
 import ru.homework3.mvc.service.TaskService;
-import ru.homework3.mvc.utils.ResponseCode;
 import ru.homework3.mvc.utils.TaskMapping;
 
 @RestController
 @RequiredArgsConstructor
 public class TaskController {
     private final TaskService taskService;
-    private final TaskMapping taskMapping;
     private final int NEW_TASK = 1;
     private final int TASK_AT_WORK = 2;
     private final int TASK_DONE = 3;
@@ -84,7 +82,7 @@ public class TaskController {
         taskDto.setDescription(description);
         taskDto.setDate(date);
 
-        ResponseCode code = taskService.createTask(taskMapping.mapToTask(taskDto, idUser, false));
+        ResponseCode code = taskService.createTask(TaskMapping.mapToTask(taskDto, idUser, false));
         RedirectView redirect;
         switch (code) {
             case ERROR_WRITE_OR_READ_CSV -> redirect = new RedirectView("/error_message?message=Error%20writing%20to%20the%20file!");
@@ -166,7 +164,7 @@ public class TaskController {
         taskDto.setDate(date);
         taskDto.setStatus(status);
 
-        ResponseCode code = taskService.updateTask(taskMapping.mapToTask(taskDto, idUser, true));
+        ResponseCode code = taskService.updateTask(TaskMapping.mapToTask(taskDto, idUser, true));
         RedirectView redirect;
         switch (code) {
             case ERROR_WRITE_OR_READ_CSV -> redirect = new RedirectView("/error_message?message=Error%20writing%20to%20the%20file!");

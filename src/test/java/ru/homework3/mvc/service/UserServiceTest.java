@@ -5,9 +5,9 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.mockito.Mockito;
+import ru.homework3.mvc.controller.ResponseCode;
 import ru.homework3.mvc.model.User;
 import ru.homework3.mvc.repo.UserRepository;
-import ru.homework3.mvc.utils.ResponseCode;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -69,7 +69,7 @@ class UserServiceTest {
 
     private User getUser() {
         User user = new User();
-        user.setName("Коля");
+        user.setName("Иван");
         user.setTasks(new HashMap<>());
         return user;
     }

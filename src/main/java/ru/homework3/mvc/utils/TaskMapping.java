@@ -1,13 +1,11 @@
 package ru.homework3.mvc.utils;
 
-import org.springframework.stereotype.Service;
 import ru.homework3.mvc.dto.TaskDto;
 import ru.homework3.mvc.model.Task;
 
-@Service
 public class TaskMapping {
 
-    public TaskDto mapToTaskDto(Task task) {
+    public static TaskDto mapToTaskDto(Task task) {
         TaskDto taskDto = new TaskDto();
         taskDto.setId(task.getId());
         taskDto.setHeader(task.getHeader());
@@ -17,7 +15,7 @@ public class TaskMapping {
         return taskDto;
     }
 
-    public Task mapToTask(TaskDto taskDto, int idUser, boolean withId) {
+    public static Task mapToTask(TaskDto taskDto, int idUser, boolean withId) {
         Task task = new Task();
         if (withId) {
             task.setId(taskDto.getId());

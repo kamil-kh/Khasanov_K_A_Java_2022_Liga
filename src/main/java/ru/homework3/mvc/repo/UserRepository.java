@@ -92,8 +92,6 @@ public class UserRepository {
         return inMemoryUsers.get(idUser).getTasks().get(idTask);
     }
 
-    public Set<Integer> getIdUsers() {return idUsers;}
-
     //добавляет пользователя в файл и память
     public boolean addUser(User user) {
         int idUser = generateIdUser();

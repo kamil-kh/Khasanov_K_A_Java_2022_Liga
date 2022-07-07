@@ -5,9 +5,9 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.mockito.Mockito;
+import ru.homework3.mvc.controller.ResponseCode;
 import ru.homework3.mvc.model.Task;
 import ru.homework3.mvc.repo.UserRepository;
-import ru.homework3.mvc.utils.ResponseCode;
 
 import java.util.ArrayList;
 import java.util.List;
