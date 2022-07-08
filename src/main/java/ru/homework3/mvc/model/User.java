@@ -12,7 +12,7 @@ import java.util.HashMap;
 @AllArgsConstructor
 @NoArgsConstructor
 public class User {
-    private int id;
+    private Integer id;
     private String name;
     private HashMap<Integer,Task> tasks;
 

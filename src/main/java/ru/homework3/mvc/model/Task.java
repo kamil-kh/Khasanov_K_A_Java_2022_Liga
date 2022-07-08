@@ -10,8 +10,8 @@ import lombok.Setter;
 @AllArgsConstructor
 @NoArgsConstructor
 public class Task {
-    private int id;
-    private int idUser;
+    private Integer id;
+    private Integer idUser;
     private String header;
     private String description;
     private String date;
@@ -29,5 +29,9 @@ public class Task {
                 date +
                 " | Статус: " +
                 status;
+    }
+
+    public Task clone() {
+        return new Task(id, idUser, header, description, date, status);
     }
 }

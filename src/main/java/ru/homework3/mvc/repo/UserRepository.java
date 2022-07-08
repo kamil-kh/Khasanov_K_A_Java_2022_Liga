@@ -1,7 +1,6 @@
 package ru.homework3.mvc.repo;
 
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.PropertySource;
 import org.springframework.stereotype.Repository;
 import ru.homework3.mvc.model.Task;
 import ru.homework3.mvc.model.User;
@@ -26,6 +25,8 @@ public class UserRepository {
     private final String dirUsers;
     private final String dirTasks;
 
+    private final char SHARP = 35; //символ '#'
+
     public UserRepository(@Value("${csv.usersDir}") String dirUsers, @Value("${csv.tasksDir}") String dirTasks) {
         this.dirUsers = dirUsers;
         this.dirTasks = dirTasks;
@@ -44,7 +45,7 @@ public class UserRepository {
         int id;
         for (line = reader.readLine(); line != null; line = reader.readLine()) {
             try {
-                if (line.charAt(0) != 35 && line.substring(0, 2).compareTo("//") != 0) {
+                if (line.charAt(0) != SHARP && line.substring(0, 2).compareTo("//") != 0) {
                     words = line.split("[,;]");
                     id = Integer.parseInt(words[0]);
                     inMemoryUsers.put(id, new User(id, words[1], new HashMap()));
@@ -54,8 +55,9 @@ public class UserRepository {
                 System.out.println(ex.getMessage());
             } catch (IndexOutOfBoundsException ex) {
                 System.out.println(ex.getMessage());
-            }
+            } catch (NullPointerException ex) {}
         }
+        idUsers = idUsers.stream().sorted((id1, id2) -> id1 - id2).collect(Collectors.toSet());
         reader.close();
         reader = Files.newBufferedReader(Path.of(dirTasks), StandardCharsets.UTF_8);
         for (line = reader.readLine(); line != null; line = reader.readLine()) {
@@ -64,8 +66,8 @@ public class UserRepository {
                     words = line.split("[,;]");
                     id = Integer.parseInt(words[0]);
                     int idUser = Integer.parseInt(words[1]);
-                    Task task = new Task(id, idUser, words[2], words[3], words[4], "Новая");
-                    ((User)inMemoryUsers.get(idUser)).getTasks().put(id, task);
+                    Task task = new Task(id, idUser, words[2], words[3], words[4], "новая");
+                    inMemoryUsers.get(idUser).getTasks().put(id, task);
                     idTasks.add(id);
                     task.setStatus(words[5]);
                 }
@@ -74,15 +76,16 @@ public class UserRepository {
             } catch (IndexOutOfBoundsException ex) {
             } catch (NullPointerException ex) {}
         }
+        idTasks = idTasks.stream().sorted((id1, id2) -> id1 - id2).collect(Collectors.toSet());
         reader.close();
     }
 
     public List<User> getUsers() {
-        return new ArrayList<User>(inMemoryUsers.values());
+        return new ArrayList<>(inMemoryUsers.values());
     }
 
     public List<Task> getTasks(int idUser) {
-        return new ArrayList<Task>(inMemoryUsers.get(idUser).getTasks().values());
+        return new ArrayList<>(inMemoryUsers.get(idUser).getTasks().values());
     }
 
     public Task getTask(int idUser, int idTask) {
@@ -90,10 +93,11 @@ public class UserRepository {
     }
 
     //добавляет пользователя в файл и память
-    public boolean addUser(String name) {
+    public boolean addUser(User user) {
         int idUser = generateIdUser();
+        user.setId(idUser);
         idUsers.add(idUser);
-        inMemoryUsers.put(idUser, new User(idUser, name, new HashMap<Integer, Task>()));
+        inMemoryUsers.put(idUser, user);
         try {
             rewriteFileUsers();
         } catch (IOException ex) {
@@ -146,10 +150,12 @@ public class UserRepository {
     }
 
     //Добавляет задачу в память и файл
-    public boolean addTask(int keyUser, String header, String description, String date) {
+    public boolean addTask(Task task) {
         int idTask = generateIdTask();
         idTasks.add(idTask);
-        Task task = new Task(idTask, keyUser, header, description, date, "Новая");
+        task.setId(idTask);
+        task.setStatus("новая");
+        int keyUser = task.getIdUser();
         try {
             inMemoryUsers.get(keyUser).getTasks().put(idTask, task);
             rewriteFileTasks();
@@ -162,20 +168,15 @@ public class UserRepository {
     }
 
     //Изменяет задачу в памяти и файле
-    public boolean changeTask(int keyUser, int keyTask, String description, String date, String status) {
-        Task task = inMemoryUsers.get(keyUser).getTasks().get(keyTask);
-        String oldDescription = task.getDescription();
-        String oldDate = task.getDate();
-        String oldStatus = task.getStatus();
-        task.setDescription(description);
-        task.setDate(date);
-        task.setStatus(status);
+    public boolean changeTask(Task updateTask) {
+        HashMap<Integer,Task> tasks = inMemoryUsers.get(updateTask.getIdUser()).getTasks();
+        int idTask = updateTask.getId();
+        Task taskCopy = tasks.get(idTask).clone();
+        tasks.replace(idTask, updateTask);
         try {
             rewriteFileTasks();
         } catch (IOException ex) {
-            task.setDescription(oldDescription);
-            task.setDate(oldDate);
-            task.setStatus(oldStatus);
+            tasks.replace(idTask, taskCopy);
             return false;
         }
         return true;
@@ -244,11 +245,9 @@ public class UserRepository {
         for (int keyUser : idUsers) {
             tasks.putAll(inMemoryUsers.get(keyUser).getTasks());
         }
-        idTasks = tasks.keySet().stream().sorted((key1, key2) -> tasks.get(key1).getId() - tasks.get(key2).getId())
-                .collect(Collectors.toSet());
         for (int keyTask : idTasks) {
             Task task = tasks.get(keyTask);
-            writer.write(Integer.toString(task.getId()) + "," + Integer.toString(task.getIdUser()) +
+            writer.write(task.getId() + "," + task.getIdUser() +
                     "," + task.getHeader() + "," + task.getDescription() + "," + task.getDate() + "," +
                     task.getStatus() + "\n"
             );
@@ -263,10 +262,17 @@ public class UserRepository {
                 StandardOpenOption.WRITE, StandardOpenOption.TRUNCATE_EXISTING
         );
         writer.write ("#id,Name\n" + "//id должен быть уникальным\n");
-        idUsers = idUsers.stream().sorted((id1, id2) -> id1 - id2).collect(Collectors.toSet());
         for (int keyUser : idUsers) {
-            writer.write(Integer.toString(keyUser) + "," + inMemoryUsers.get(keyUser).getName() + "\n");
+            writer.write(keyUser + "," + inMemoryUsers.get(keyUser).getName() + "\n");
         }
         writer.close();
+    }
+
+    public boolean checkIdUser(Integer idUser) {
+        return idUsers.contains(idUser);
+    }
+
+    public boolean checkIdTask(Integer idTask) {
+        return idTasks.contains(idTask);
     }
 }
