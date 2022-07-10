@@ -2,17 +2,13 @@ package ru.homework3.mvc.controller;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
-import ru.homework3.mvc.dto.DtoEntities;
-import ru.homework3.mvc.model.Task;
-import ru.homework3.mvc.model.User;
-import ru.homework3.mvc.service.UserServiceCommandImpl;
-
-import java.util.HashMap;
+import ru.homework3.mvc.dto.UserDto;
+import ru.homework3.mvc.service.UserService;
 
 @RestController
 @RequiredArgsConstructor
 public class Controller {
-    private final UserServiceCommandImpl userService;
+    private final UserService userService;
 
     @GetMapping("/")
     public String index(@RequestParam(value = "command", required = false) String command,
@@ -24,10 +20,10 @@ public class Controller {
                         @RequestParam(value = "task-description", required = false) String taskDescription,
                         @RequestParam(value = "task-date", required = false) String taskDate,
                         @RequestParam(value = "task-status", required = false) String taskStatus) {
-        DtoEntities dto = new DtoEntities();
+        UserDto dto = new UserDto();
         dto.setUser(userId, userName);
         dto.setTask(taskId, userId, taskHeader, taskDescription, taskDate, taskStatus);
         dto.setFilter(filter);
-        return userService.run(command, dto);
+        return userService.index(command, dto);
     }
 }

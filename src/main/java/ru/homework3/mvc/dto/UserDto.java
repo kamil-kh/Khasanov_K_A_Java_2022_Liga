@@ -6,12 +6,10 @@ import lombok.NoArgsConstructor;
 import ru.homework3.mvc.model.Task;
 import ru.homework3.mvc.model.User;
 
-import java.util.Objects;
-
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor
-public class DtoEntities {
+public class UserDto {
     private User user;
     private Task task;
     private Integer filter;

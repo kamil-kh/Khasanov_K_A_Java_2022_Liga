@@ -1,7 +1,9 @@
 package ru.homework3.mvc.service;
 
-import ru.homework3.mvc.dto.DtoEntities;
+import ru.homework3.mvc.dto.UserDto;
 
 public interface Command {
-    String run(String commandName, DtoEntities dto);
+    String run(UserDto dto);
+
+    String getCommandName();
 }

@@ -1,22 +1,21 @@
 package ru.homework3.mvc.service.commands;
 
 import lombok.RequiredArgsConstructor;
-import ru.homework3.mvc.dto.DtoEntities;
+import org.springframework.stereotype.Component;
+import ru.homework3.mvc.dto.UserDto;
 import ru.homework3.mvc.model.Task;
 import ru.homework3.mvc.repo.UserRepository;
 import ru.homework3.mvc.service.Command;
 import ru.homework3.mvc.util.validator.Validator;
 
+@Component
 @RequiredArgsConstructor
 public class UpdateTaskCommandImpl implements Command {
     private final UserRepository userRepository;
     private final String COMMAND_NAME = "update task";
 
     @Override
-    public String run(String commandName, DtoEntities dto) {
-        if (!(COMMAND_NAME.compareTo(commandName.toLowerCase()) == 0)) {
-            return "";
-        }
+    public String run(UserDto dto) {
         Task task = dto.getTask();
         Integer idUser = task.getIdUser();
         if (idUser == null) {
@@ -46,5 +45,10 @@ public class UpdateTaskCommandImpl implements Command {
         } else {
             return "<p style='color:red;'>Неудачное обновление задачи.</p>";
         }
+    }
+
+    @Override
+    public String getCommandName() {
+        return COMMAND_NAME;
     }
 }
