@@ -20,8 +20,8 @@ public class TaskController {
     private final int TASK_DONE = 3;
 
     @GetMapping("/{id}")
-    public String showUsers(@PathVariable("id") int idUser,
-                            @RequestParam("filter") int filter) {
+    public String showUsers(@PathVariable("id") Integer idUser,
+                            @RequestParam("filter") Integer filter) {
         String tasks = "Задачи пользователя:<br/>" +
                 taskService.getTasks(idUser, filter) +
                 "<br/>Меню:" +
@@ -33,7 +33,7 @@ public class TaskController {
     }
 
     @GetMapping("/{id}/new_task")
-    public String newTask(@PathVariable("id") int idUser,
+    public String newTask(@PathVariable("id") Integer idUser,
                           @RequestParam(value = "error", required = false) String error) {
         String message = error;
         if(message == null) {
@@ -71,7 +71,7 @@ public class TaskController {
     }
 
     @GetMapping("/{id}/newTask")
-    public RedirectView createTask(@PathVariable("id") int idUser,
+    public RedirectView createTask(@PathVariable("id") Integer idUser,
                                    @RequestParam("header") String header,
                                    @RequestParam("description") String description,
                                    @RequestParam("date") String date) {
@@ -93,8 +93,8 @@ public class TaskController {
     }
 
     @GetMapping("/{id}/update_task/{idTask}")
-    public String changeTask(@PathVariable("id") int idUser,
-                             @PathVariable("idTask") int idTask,
+    public String changeTask(@PathVariable("id") Integer idUser,
+                             @PathVariable("idTask") Integer idTask,
                              @RequestParam(value = "error", required = false) String error) {
         String message = error;
         if(message == null) {
@@ -149,8 +149,8 @@ public class TaskController {
     }
 
     @GetMapping("/{id}/updateTask/{idTask}")
-    public RedirectView updateTask(@PathVariable("id") int idUser,
-                                   @PathVariable("idTask") int idTask,
+    public RedirectView updateTask(@PathVariable("id") Integer idUser,
+                                   @PathVariable("idTask") Integer idTask,
                                    @RequestParam("header") String header,
                                    @RequestParam("status") String status,
                                    @RequestParam("description") String description,
@@ -175,9 +175,9 @@ public class TaskController {
     }
 
     @GetMapping("/{id}/delete_task/{idTask}")
-    public RedirectView deleteTask(@PathVariable("id") int idUser,
-                                   @PathVariable("idTask") int idTask,
-                                   @RequestParam("filter") int filter) {
+    public RedirectView deleteTask(@PathVariable("id") Integer idUser,
+                                   @PathVariable("idTask") Integer idTask,
+                                   @RequestParam("filter") Integer filter) {
         if (taskService.deleteTask(idUser, idTask) == ResponseCode.SUCCESS) {
             return new RedirectView("/" + idUser + "?filter=" + filter);
         } else {

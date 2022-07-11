@@ -10,8 +10,8 @@ import lombok.Setter;
 @AllArgsConstructor
 @NoArgsConstructor
 public class Task implements Cloneable {
-    private int id;
-    private int idUser;
+    private Integer id;
+    private Integer idUser;
     private String header;
     private String description;
     private String date;
@@ -29,6 +29,10 @@ public class Task implements Cloneable {
                 date +
                 " | Статус: " +
                 status;
+    }
+
+    public String toStringCsv() {
+        return id + "," + idUser + "," + header + "," + description + "," + date + "," + status;
     }
 
     public Task clone() {

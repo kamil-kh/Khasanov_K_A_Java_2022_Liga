@@ -66,7 +66,7 @@ public class UserController {
     }
 
     @GetMapping("/{id}/delete_user")
-    public RedirectView deleteUser(@PathVariable("id") int idUser) {
+    public RedirectView deleteUser(@PathVariable("id") Integer idUser) {
         if (userService.deleteUser(idUser) == ResponseCode.ERROR_WRITE_OR_READ_CSV) {
             return new RedirectView("/error_message?message=Error%20writing%20to%20the%20file!");
         } else {

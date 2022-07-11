@@ -36,7 +36,7 @@ public class UserService {
         }
     }
 
-    public ResponseCode deleteUser(int idUser) {
+    public ResponseCode deleteUser(Integer idUser) {
         return getCode(userRepository.removeUser(idUser));
     }
 

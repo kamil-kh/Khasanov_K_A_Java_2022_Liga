@@ -12,12 +12,16 @@ import java.util.HashMap;
 @AllArgsConstructor
 @NoArgsConstructor
 public class User {
-    private int id;
+    private Integer id;
     private String name;
     private HashMap<Integer,Task> tasks;
 
     @Override
     public String toString() {
         return id + ". " + name;
+    }
+
+    public String toStringCsv() {
+        return id + "," + name;
     }
 }

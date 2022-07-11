@@ -14,7 +14,7 @@ import java.util.List;
 public class TaskService {
     private final UserRepository userRepository;
 
-    public String getTasks(int idUser, int filter) {
+    public String getTasks(Integer idUser, Integer filter) {
         String tasksStr = "";
         List<Task> tasks = userRepository.getTasks(idUser);
         if (filter == 1) {
@@ -33,7 +33,7 @@ public class TaskService {
         return tasksStr;
     }
 
-    public Task getTask(int idUser, int idTask) {
+    public Task getTask(Integer idUser, Integer idTask) {
         return userRepository.getTask(idUser, idTask);
     }
 
@@ -45,7 +45,7 @@ public class TaskService {
         }
     }
 
-    public ResponseCode deleteTask(int idUser, int idTask) {
+    public ResponseCode deleteTask(Integer idUser, Integer idTask) {
         return getCode(userRepository.removeTask(idUser, idTask));
     }
 
