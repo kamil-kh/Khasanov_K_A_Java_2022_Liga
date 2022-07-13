@@ -2,6 +2,7 @@ package ru.homework3.mvc.utils;
 
 import ru.homework3.mvc.dto.TaskDto;
 import ru.homework3.mvc.model.Task;
+import ru.homework3.mvc.model.User;
 
 public class TaskMapping {
 
@@ -15,12 +16,11 @@ public class TaskMapping {
         return taskDto;
     }
 
-    public static Task mapToTask(TaskDto taskDto, int idUser, boolean withId) {
+    public static Task mapToTask(TaskDto taskDto, boolean withId) {
         Task task = new Task();
         if (withId) {
             task.setId(taskDto.getId());
         }
-        task.setIdUser(idUser);
         task.setHeader(taskDto.getHeader());
         task.setDescription(taskDto.getDescription());
         task.setDate(taskDto.getDate());

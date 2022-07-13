@@ -57,29 +57,23 @@ public class UserController {
 
         ResponseCode code = userService.createUser(UserMapping.mapToUser(userDto, false));
         RedirectView redirect;
-        switch (code) {
-            case ERROR_WRITE_OR_READ_CSV -> redirect = new RedirectView("/error_message?message=Error%20writing%20to%20the%20file!");
-            case ERROR_VALIDATE -> redirect = new RedirectView("/new_user?error=Incorrect%20format%20of%20the%20\"Name\".");
-            default -> redirect = new RedirectView("/");
+        if (code == ResponseCode.ERROR_VALIDATE) {
+            redirect = new RedirectView("/new_user?error=Incorrect%20format%20of%20the%20\"Name\".");
+        } else {
+            redirect = new RedirectView("/");
         }
         return redirect;
     }
 
     @GetMapping("/{id}/delete_user")
     public RedirectView deleteUser(@PathVariable("id") Integer idUser) {
-        if (userService.deleteUser(idUser) == ResponseCode.ERROR_WRITE_OR_READ_CSV) {
-            return new RedirectView("/error_message?message=Error%20writing%20to%20the%20file!");
-        } else {
-            return new RedirectView("/");
-        }
+        userService.deleteUser(idUser);
+        return new RedirectView("/");
     }
 
     @GetMapping("/delete_all_user")
     public RedirectView deleteUsers() {
-        if (userService.deleteUsers() == ResponseCode.ERROR_WRITE_OR_READ_CSV) {
-            return new RedirectView("/error_message?message=Error%20writing%20to%20the%20file!");
-        } else {
-            return new RedirectView("/");
-        }
+        userService.deleteUsers();
+        return new RedirectView("/");
     }
 }

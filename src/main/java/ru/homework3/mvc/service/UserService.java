@@ -16,7 +16,7 @@ public class UserService {
 
     public String getUsers() {
         String usersStr = "";
-        List<User> users = userRepository.getUsers();
+        List<User> users = userRepository.findAll();
         for (User user: users) {
             usersStr += user.toString() +
                     " {<a href='/" +
@@ -30,25 +30,18 @@ public class UserService {
 
     public ResponseCode createUser(User user) {
         if (Validator.validateName(user.getName())) {
-            return getCode(userRepository.addUser(user));
+            userRepository.save(user);
+            return ResponseCode.SUCCESS;
         } else {
             return ResponseCode.ERROR_VALIDATE;
         }
     }
 
-    public ResponseCode deleteUser(Integer idUser) {
-        return getCode(userRepository.removeUser(idUser));
+    public void deleteUser(Integer idUser) {
+        userRepository.deleteById(idUser);
     }
 
-    public ResponseCode deleteUsers() {
-        return getCode(userRepository.clearUsers());
-    }
-
-    private ResponseCode getCode(boolean isSuccess) {
-        if (isSuccess) {
-            return ResponseCode.SUCCESS;
-        } else {
-            return ResponseCode.ERROR_WRITE_OR_READ_CSV;
-        }
+    public void deleteUsers() {
+        userRepository.deleteAll();
     }
 }

@@ -5,16 +5,35 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import javax.persistence.*;
+
 @Getter
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-public class Task implements Cloneable {
+@Entity
+@Table(name = "tasks")
+public class Task {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.SEQUENCE)
+    @Column(name = "id")
     private Integer id;
-    private Integer idUser;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id")
+    private User user;
+
+    @Column(name = "header")
     private String header;
+
+    @Column(name = "description")
     private String description;
+
+    @Column(name = "date")
     private String date;
+
+    @Column(name = "status")
     private String status;
 
     @Override
@@ -29,13 +48,5 @@ public class Task implements Cloneable {
                 date +
                 " | Статус: " +
                 status;
-    }
-
-    public String toStringCsv() {
-        return id + "," + idUser + "," + header + "," + description + "," + date + "," + status;
-    }
-
-    public Task clone() {
-        return new Task(id, idUser, header, description, date, status);
     }
 }

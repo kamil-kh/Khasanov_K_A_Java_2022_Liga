@@ -1,9 +1,10 @@
 package ru.homework3.mvc.utils;
 
 import ru.homework3.mvc.dto.UserDto;
+import ru.homework3.mvc.model.Task;
 import ru.homework3.mvc.model.User;
 
-import java.util.HashMap;
+import java.util.*;
 
 public class UserMapping {
 
@@ -22,7 +23,6 @@ public class UserMapping {
             user.setId(userDto.getId());
         }
         user.setName(userDto.getName());
-        user.setTasks(new HashMap<>());
         return user;
     }
 }

@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.view.RedirectView;
 import ru.homework3.mvc.dto.TaskDto;
 import ru.homework3.mvc.model.Task;
+import ru.homework3.mvc.model.User;
 import ru.homework3.mvc.service.TaskService;
 import ru.homework3.mvc.utils.TaskMapping;
 
@@ -82,12 +83,12 @@ public class TaskController {
         taskDto.setDescription(description);
         taskDto.setDate(date);
 
-        ResponseCode code = taskService.createTask(TaskMapping.mapToTask(taskDto, idUser, false));
+        ResponseCode code = taskService.createTask(TaskMapping.mapToTask(taskDto,false), idUser);
         RedirectView redirect;
-        switch (code) {
-            case ERROR_WRITE_OR_READ_CSV -> redirect = new RedirectView("/error_message?message=Error%20writing%20to%20the%20file!");
-            case ERROR_VALIDATE -> redirect = new RedirectView("/" + idUser + "/new_task?error=Incorrect%20format%20of%20the%20\"Date\".");
-            default -> redirect = new RedirectView("/" + idUser + "?filter=1");
+        if (code == ResponseCode.ERROR_VALIDATE) {
+            redirect = new RedirectView("/" + idUser + "/new_task?error=Incorrect%20format%20of%20the%20\"Date\".");
+        } else {
+            redirect = new RedirectView("/" + idUser + "?filter=1");
         }
         return redirect;
     }
@@ -164,12 +165,12 @@ public class TaskController {
         taskDto.setDate(date);
         taskDto.setStatus(status);
 
-        ResponseCode code = taskService.updateTask(TaskMapping.mapToTask(taskDto, idUser, true));
+        ResponseCode code = taskService.updateTask(TaskMapping.mapToTask(taskDto, true), idTask);
         RedirectView redirect;
-        switch (code) {
-            case ERROR_WRITE_OR_READ_CSV -> redirect = new RedirectView("/error_message?message=Error%20writing%20to%20the%20file!");
-            case ERROR_VALIDATE -> redirect = new RedirectView("/" + idUser + "/new_task?error=Incorrect%20format%20of%20the%20\"Date\".");
-            default -> redirect = new RedirectView("/" + idUser + "?filter=1");
+        if (code == ResponseCode.ERROR_VALIDATE) {
+            redirect = new RedirectView("/" + idUser + "/new_task?error=Incorrect%20format%20of%20the%20\"Date\".");
+        } else {
+            redirect = new RedirectView("/" + idUser + "?filter=1");
         }
         return redirect;
     }
@@ -178,19 +179,13 @@ public class TaskController {
     public RedirectView deleteTask(@PathVariable("id") Integer idUser,
                                    @PathVariable("idTask") Integer idTask,
                                    @RequestParam("filter") Integer filter) {
-        if (taskService.deleteTask(idUser, idTask) == ResponseCode.SUCCESS) {
-            return new RedirectView("/" + idUser + "?filter=" + filter);
-        } else {
-            return new RedirectView("/error_message?message=Error%20writing%20to%20the%20file!");
-        }
+        taskService.deleteTask(idTask);
+        return new RedirectView("/" + idUser + "?filter=" + filter);
     }
 
     @GetMapping("/delete_all_tasks")
     public RedirectView deleteTasks() {
-        if (taskService.deleteTasks() == ResponseCode.SUCCESS) {
-            return new RedirectView("/");
-        } else {
-            return new RedirectView("/error_message?message=Error%20writing%20to%20the%20file!");
-        }
+        taskService.deleteTasks();
+        return new RedirectView("/");
     }
 }
