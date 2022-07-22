@@ -1,15 +1,10 @@
 package ru.homework3.mvc.model;
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 
 import javax.persistence.*;
 
-@Getter
-@Setter
-@AllArgsConstructor
+@Data
 @NoArgsConstructor
 @Entity
 @Table(name = "tasks")
@@ -35,18 +30,4 @@ public class Task {
 
     @Column(name = "status")
     private String status;
-
-    @Override
-    public String toString() {
-        return "ID задачи: " +
-                id +
-                " | Заголовок: " +
-                header +
-                " | Описание: " +
-                description +
-                " | Дата: " +
-                date +
-                " | Статус: " +
-                status;
-    }
 }

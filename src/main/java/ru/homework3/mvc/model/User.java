@@ -1,9 +1,6 @@
 package ru.homework3.mvc.model;
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 import org.hibernate.annotations.Fetch;
 import org.hibernate.annotations.FetchMode;
 
@@ -11,9 +8,7 @@ import javax.persistence.*;
 import java.util.HashMap;
 import java.util.List;
 
-@Getter
-@Setter
-@AllArgsConstructor
+@Data
 @NoArgsConstructor
 @Entity
 @Table(name = "users")
@@ -31,9 +26,7 @@ public class User {
     @Fetch(FetchMode.JOIN)
     private List<Task> tasks;
 
-    @Override
-    public String toString() {
-        return id + ". " + name;
+    public void clearTasks() {
+        tasks.clear();
     }
-
 }

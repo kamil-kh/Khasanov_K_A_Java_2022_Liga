@@ -1,79 +1,51 @@
 package ru.homework3.mvc.controller;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.view.RedirectView;
 import ru.homework3.mvc.dto.UserDto;
 import ru.homework3.mvc.service.UserService;
-import ru.homework3.mvc.utils.UserMapping;
+
+import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
 public class UserController {
     private final UserService userService;
 
-    @GetMapping("/")
-    public String index() {
-        String users = "Пользователи:<br/>" +
-                userService.getUsers() +
-                "<br/>Меню:" +
-                "<br/>1. <a href='/new_user'>Добавить пользователя.</a>" +
-                "<br/>2. <a href='/delete_all_user'>Удалить всех пользователей.</a>" +
-                "<br/>3. <a href='/delete_all_tasks'>Удалить все задачи.</a>";
-        return users;
+    @GetMapping(value = "/users", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<List<UserDto>> index() {
+        return new ResponseEntity<>(userService.getUsers(), HttpStatus.OK);
     }
 
-    @GetMapping("/new_user")
-    public String newUser(@RequestParam(value = "error", required = false) String error) {
-        String message = error;
-        if(message == null) {
-            message = "";
-        }
-        String html = "<form>" +
-                "<label for='name'>Введите имя: </label>" +
-                "<input type='text' id='name'><br/><br/>" +
-                "<span> Пример: Олег. (Имя должно начинаться с большой буквы и не иметь пробелов.)</span>" +
-                "</form>" +
-                "<button onclick='getFormValue()'>Создать пользователя!</button><br/>" +
-                "</br><a href='/'>Главная</a><br/>" +
-                "<br/><p id='message' style='color:red;'></p>" +
-                "<script type='text/javascript'>" +
-                "document.getElementById('message').textContent = '" + message + "';" +
-                "function getFormValue() {" +
-                "let name = document.getElementById('name').value;" +
-                "if (name === '') {" +
-                "document.getElementById('message').textContent = 'Поле {Имя} не должно быть пустым';}" +
-                "else {document.location.href = '/newUser?name=' + name;}};" +
-                "</script>";
-        return html;
-    }
-
-    @GetMapping("/newUser")
-    public RedirectView createUser(@RequestParam("name") String name) {
-        //вместо этого действия вроде желательно принимать dto
-        //имитируем приём dto
-        UserDto userDto = new UserDto();
-        userDto.setName(name);
-
-        ResponseCode code = userService.createUser(UserMapping.mapToUser(userDto, false));
-        RedirectView redirect;
-        if (code == ResponseCode.ERROR_VALIDATE) {
-            redirect = new RedirectView("/new_user?error=Incorrect%20format%20of%20the%20\"Name\".");
+    @GetMapping(value = "/users/{userId}", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<UserDto> getUser(@PathVariable Integer userId) {
+        UserDto dto = userService.getUser(userId);
+        if (dto == null) {
+            return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
         } else {
-            redirect = new RedirectView("/");
+            return new ResponseEntity<>(dto, HttpStatus.OK);
         }
-        return redirect;
     }
 
-    @GetMapping("/{id}/delete_user")
-    public RedirectView deleteUser(@PathVariable("id") Integer idUser) {
-        userService.deleteUser(idUser);
-        return new RedirectView("/");
+    @PostMapping(value = "/users",
+            consumes = MediaType.APPLICATION_JSON_VALUE,
+            produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<UserDto> create(@RequestBody UserDto dto) {
+        return new ResponseEntity<>(userService.createUser(dto), HttpStatus.OK);
     }
 
-    @GetMapping("/delete_all_user")
-    public RedirectView deleteUsers() {
+    @DeleteMapping(value = "/users/{userId}")
+    public ResponseEntity<String> delete(@PathVariable Integer userId) {
+        return new ResponseEntity<>(userService.deleteUser(userId), HttpStatus.OK);
+    }
+
+    @DeleteMapping(value = "/users")
+    public ResponseEntity<String> deletes() {
         userService.deleteUsers();
-        return new RedirectView("/");
+        return new ResponseEntity<>("Done!", HttpStatus.OK);
     }
 }
