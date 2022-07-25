@@ -1,4 +1,4 @@
-package ru.homework3.mvc;
+package ru.homework3.mvc.controller;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
