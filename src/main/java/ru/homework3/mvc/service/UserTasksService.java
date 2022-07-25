@@ -13,9 +13,10 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
-public class TaskService {
+public class UserTasksService {
     private final TaskRepository taskRepository;
     private final UserRepository userRepository;
+    private final String SUCCESS = "Success!";
 
     public List<TaskDto> getTasks(Integer idUser) {
         if (userRepository.existsById(idUser)) {
@@ -41,47 +42,45 @@ public class TaskService {
         return null;
     }
 
-    public TaskDto createTask(TaskDto dto, Integer idUser) {
-        if (userRepository.existsById(idUser)) {
-            Task task = dto.toTask();
-            task.setUser(userRepository.getReferenceById(idUser));
-            return TaskDto.build(taskRepository.save(task));
-        }
-        return null;
+    public String createTask(TaskDto dto, Integer idUser) {
+        Task task = dto.toTask();
+        task.setUser(userRepository.getReferenceById(idUser));
+        taskRepository.save(task);
+        return SUCCESS;
     }
 
-    public TaskDto updateTask(TaskDto dto, Integer idUser) {
-        if (userRepository.existsById(idUser) && taskRepository.existsById(dto.getId())) {
+    public String updateTask(TaskDto dto, Integer idUser) {
+        if (taskRepository.existsById(dto.getId())) {
             List<Task> tasks = taskRepository.findAll(TaskDto.hasTaskWithIdUser(idUser, dto.getId()));
             if(tasks.size() == 1) {
                 Task task = tasks.get(0);
                 task.setDescription(dto.getDescription());
                 task.setDate(dto.getDate());
                 task.setStatus(dto.getStatus());
-                return TaskDto.build(taskRepository.save(task));
+                taskRepository.save(task);
+                return SUCCESS;
             }
         }
         return null;
     }
 
     public String deleteTask(Integer idUser, Integer idTask) {
-        if (userRepository.existsById(idUser) && taskRepository.existsById(idTask)) {
+        if (taskRepository.existsById(idTask)) {
             List<Task> tasks = taskRepository.findAll(TaskDto.hasTaskWithIdUser(idUser, idTask));
             if(tasks.size() == 1) {
                 if(tasks.get(0).getId() == idTask) {
                     taskRepository.deleteById(idTask);
-                    return "Done!";
+                    return SUCCESS;
                 }
             }
         }
         return "Fail!";
     }
 
-    public void deleteTasks(Integer idUser) {
-        if (userRepository.existsById(idUser)) {
-            User user = userRepository.getReferenceById(idUser);
-            user.clearTasks();
-            userRepository.save(user);
-        }
+    public String deleteTasks(Integer idUser) {
+        User user = userRepository.getReferenceById(idUser);
+        user.clearTasks();
+        userRepository.save(user);
+        return SUCCESS;
     }
 }

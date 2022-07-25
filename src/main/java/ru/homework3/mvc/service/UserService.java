@@ -13,6 +13,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class UserService {
     private final UserRepository userRepository;
+    private final String SUCCESS = "Success!";
 
     public List<UserDto> getUsers() {
         List<User> users = userRepository.findAll();
@@ -31,19 +32,31 @@ public class UserService {
         }
     }
 
-    public UserDto createUser(UserDto dto) {
-        return UserDto.build(userRepository.save(dto.toUser()));
+    public String createUser(UserDto dto) {
+        userRepository.save(dto.toUser());
+        return SUCCESS;
+    }
+
+    public String updateUser(UserDto dto) {
+        if (userRepository.existsById(dto.getId())) {
+            User user = userRepository.getReferenceById(dto.getId());
+            user.setName(dto.getName());
+            userRepository.save(user);
+            return SUCCESS;
+        }
+        return null;
     }
 
     public String deleteUser(Integer idUser) {
         if (userRepository.existsById(idUser)) {
             userRepository.deleteById(idUser);
-            return "Done!";
+            return SUCCESS;
         }
         return "Fail!";
     }
 
-    public void deleteUsers() {
+    public String deleteUsers() {
         userRepository.deleteAll();
+        return SUCCESS;
     }
 }

@@ -4,9 +4,12 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.view.RedirectView;
 import ru.homework3.mvc.dto.UserDto;
+import ru.homework3.mvc.dto.transfer.New;
+import ru.homework3.mvc.dto.transfer.Update;
 import ru.homework3.mvc.service.UserService;
 
 import java.util.List;
@@ -17,35 +20,42 @@ public class UserController {
     private final UserService userService;
 
     @GetMapping(value = "/users", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<List<UserDto>> index() {
-        return new ResponseEntity<>(userService.getUsers(), HttpStatus.OK);
+    public List<UserDto> index() {
+        return userService.getUsers();
     }
 
     @GetMapping(value = "/users/{userId}", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<UserDto> getUser(@PathVariable Integer userId) {
+    public UserDto getUser(@PathVariable Integer userId) throws BusinessException {
         UserDto dto = userService.getUser(userId);
         if (dto == null) {
-            return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
-        } else {
-            return new ResponseEntity<>(dto, HttpStatus.OK);
+            throw new BusinessException("User not found!");
         }
+        return dto;
     }
 
-    @PostMapping(value = "/users",
-            consumes = MediaType.APPLICATION_JSON_VALUE,
-            produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<UserDto> create(@RequestBody UserDto dto) {
-        return new ResponseEntity<>(userService.createUser(dto), HttpStatus.OK);
+    @PostMapping("/users")
+    public String create(@Validated(New.class) @RequestBody UserDto dto) {
+        return userService.createUser(dto);
     }
 
-    @DeleteMapping(value = "/users/{userId}")
-    public ResponseEntity<String> delete(@PathVariable Integer userId) {
-        return new ResponseEntity<>(userService.deleteUser(userId), HttpStatus.OK);
+    @PutMapping("/users/{userId}")
+    public String update(@Validated(Update.class) @RequestBody UserDto dto, @PathVariable Integer userId)
+            throws BusinessException {
+        dto.setId(userId);
+        String message = userService.updateUser(dto);
+        if (message == null) {
+            throw new BusinessException("User not found!");
+        }
+        return message;
     }
 
-    @DeleteMapping(value = "/users")
-    public ResponseEntity<String> deletes() {
-        userService.deleteUsers();
-        return new ResponseEntity<>("Done!", HttpStatus.OK);
+    @DeleteMapping("/users/{userId}")
+    public String delete(@PathVariable Integer userId) {
+        return userService.deleteUser(userId);
+    }
+
+    @DeleteMapping("/users")
+    public String deletes() {
+        return userService.deleteUsers();
     }
 }
